@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chatbot UI</title>
+  <link rel="stylesheet" href="static/chatbot.css">
+</head>
+<body>
+
+  <div class="chat-container">
+    <div class="chat-box" id="chatBox">
+      <!-- Chat messages will appear here -->
+    </div>
+    <div class="input-box">
+      <textarea id="userInput" placeholder="Type a message..."></textarea>
+      <button onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const userInput = document.getElementById('userInput');
+    const chatBox = document.getElementById('chatBox');
+
+    // Auto-expand the textarea as the user types
+    userInput.addEventListener('input', () => {
+      userInput.style.height = 'auto';
+      userInput.style.height = userInput.scrollHeight + 'px';
+    });
+
+    function sendMessage() {
+      const message = "You: "+userInput.value.trim();
+      if (message === '') return;
+
+      // Add user message to chat box
+      const userMessageDiv = document.createElement('div');
+      userMessageDiv.className = 'message_user';
+      userMessageDiv.textContent = message;
+      chatBox.appendChild(userMessageDiv);
+
+      // Clear the input box and auto-expand it
+      userInput.value = '';
+      userInput.style.height = 'auto';
+
+      // Send the user message to the backend (Flask) and get the chatbot response
+      fetch('/send_message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'message=' + encodeURIComponent(message)
+      })
+      .then(response => response.json())
+      .then(data => {
+        const botMessageDiv = document.createElement('div');
+        const botPre = document.createElement('pre');
+        botMessageDiv.className = 'message_bot';
+        botPre.className = 'bot_pre';
+        botPre.textContent = "Bot: " + data.response;
+        botMessageDiv.appendChild(botPre);
+        chatBox.appendChild(botMessageDiv);
+
+        chatBox.scrollTop = chatBox.scrollHeight;
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    }
+  </script>
+
+</body>
+</html>
